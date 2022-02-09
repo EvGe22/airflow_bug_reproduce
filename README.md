@@ -1,5 +1,13 @@
+## How to run
+
+```
+docker-compose build
+docker-compose up
+```
+
+
 ## Setup
-Have 2 DAGs: 
+Have 3 DAGs: 
 1. ~240 Tasks, executes every hour, runs for about 45-50 minutes total
 2. ~600 Tasks, executes every 5 days, runs for days
 3. ~10 Tasks, executes on trigger, runs for 10-50 minutes
