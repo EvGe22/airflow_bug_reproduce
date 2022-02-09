@@ -1,0 +1,61 @@
+version: '3.9'
+
+
+services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow_db
+    restart: always
+
+  webserver:
+    image: custom_airflow_image:bug_reproduce
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - _AIRFLOW_WWW_USER_USERNAME=airflow
+      - _AIRFLOW_WWW_USER_PASSWORD=airflow
+      - _AIRFLOW_WWW_USER_CREATE=True
+      - _AIRFLOW_DB_UPGRADE=True
+      - WORKING_DIR=/app/
+      - LC_ALL=en_US.UTF-8
+      - LANG=en_US.UTF-8
+      - PYTHONIOENCODING=utf-8
+      - AIRFLOW_DATABASE_NAME=airflow_db
+      - AIRFLOW_DATABASE_USERNAME=airflow
+      - AIRFLOW_DATABASE_PASSWORD=airflow
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  scheduler:
+    image: custom_airflow_image:bug_reproduce
+    restart: always
+    depends_on:
+      - postgres
+      - webserver
+    environment:
+      - WORKING_DIR=/app/
+      - LC_ALL=en_US.UTF-8
+      - LANG=en_US.UTF-8
+      - PYTHONIOENCODING=utf-8
+      - AIRFLOW_DATABASE_NAME=airflow_db
+      - AIRFLOW_DATABASE_USERNAME=airflow
+      - AIRFLOW_DATABASE_PASSWORD=airflow
+    command: scheduler
+    healthcheck:
+      test: [ "CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"' ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
